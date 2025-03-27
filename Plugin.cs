@@ -17,6 +17,9 @@ namespace PerfectSlotOnly
         private static PerfectSlotOnlyBase Instance;
 
         private static bool IsAllowKeyHeld => Input.GetKey(KeyCode.LeftShift);
+        
+        [System.Runtime.InteropServices.DllImport("USER32.dll")] public static extern short GetKeyState(int nVirtKey);
+        private static bool IsCapsLockOn => (GetKeyState(0x14) & 1) > 0;
 
         private void Awake()
         {
@@ -76,8 +79,9 @@ namespace PerfectSlotOnly
         {
             foreach (TileSlot value in ___tileSlots.Values)
             {
-                if (!IsAllowKeyHeld)
-                { 
+                if (IsCapsLockOn)
+                // if (!IsAllowKeyHeld)
+                {
                     if (!IsSlotPerfect(value, newTile))
                     {
                         value.SetState(TileSlotState.Invalid);
