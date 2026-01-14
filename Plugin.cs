@@ -12,12 +12,14 @@ namespace PerfectSlotOnly
         private const string modName = "Perfect Slot";
         private const string modVersion = "1.0.0";
 
+        private static readonly Color DarkerBackgroundColor = new Color(0.4f, 0.4f, 0.4f, 1.0f);
+
         private readonly Harmony harmony = new Harmony(modGUID);
 
         private static PerfectSlotOnlyBase Instance;
 
         private static bool IsAllowKeyHeld => Input.GetKey(KeyCode.LeftShift);
-        
+
         [System.Runtime.InteropServices.DllImport("USER32.dll")] public static extern short GetKeyState(int nVirtKey);
         private static bool IsCapsLockOn => (GetKeyState(0x14) & 1) > 0;
 
@@ -29,10 +31,9 @@ namespace PerfectSlotOnly
             }
 
             harmony.PatchAll(typeof(PerfectSlotOnlyBase));
-
         }
 
-        private static bool IsSlotPerfectRot(TileSlot slot, Tile tile,int rot)
+        private static bool IsSlotPerfectRot(TileSlot slot, Tile tile, int rot)
         {
             int num = 0;
             for (int i = 0; i < 6; i++)
@@ -59,9 +60,9 @@ namespace PerfectSlotOnly
                     num++;
                 }
             }
-            return num==6;
+            return num == 6;
         }
-        private static bool IsSlotPerfect(TileSlot slot,Tile tile)
+        private static bool IsSlotPerfect(TileSlot slot, Tile tile)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -73,7 +74,8 @@ namespace PerfectSlotOnly
             return false;
         }
 
-        [HarmonyPatch(typeof(TileSlotPreviewer),"UpdateTileSlotValidity")]
+
+        [HarmonyPatch(typeof(TileSlotPreviewer), "UpdateTileSlotValidity")]
         [HarmonyPostfix]
         private static void ShowPerfectSlotOnly(Tile newTile, ref Dictionary<Vector2Int, TileSlot> ___tileSlots)
         {
@@ -90,5 +92,21 @@ namespace PerfectSlotOnly
             }
         }
 
+        [HarmonyPatch(typeof(ChangeCameraBackgroundBasedOnFocus), "Update")]
+        [HarmonyPostfix]
+        static void UpdatePostfix(ref Material ___skyboxGradientMat)
+        {
+
+            if (IsCapsLockOn)
+            {
+                Color overideColor = DarkerBackgroundColor;
+                Color.RGBToHSV(overideColor, out var H, out var S, out var V);
+                Vector3 hsvOffsetColor2 = new Vector3(0f, -20f, 7f);
+                Vector3 vector = new Vector3(H + hsvOffsetColor2.x / 100f, S + hsvOffsetColor2.y / 100f, V + hsvOffsetColor2.z / 100f);
+                Color color2 = Color.HSVToRGB(vector.x, vector.y, vector.z);
+                ___skyboxGradientMat.SetColor("_Color1", overideColor);
+                ___skyboxGradientMat.SetColor("_Color2", color2);
+            }
+        }
     }
 }
